@@ -998,6 +998,9 @@ retry_get_irq_gpio:
 				GOODIX_GPIO_INT_NAME, error);
 		return error;
 	}
+	volatile void *reg_base = ioremap(0xff4d8840, 4);
+	writel(0x00400040, reg_base);// Enable GPIO4_B2 input
+	iounmap(reg_base);
 	if (!gpiod && has_acpi_companion(dev) && !added_acpi_mappings) {
 		added_acpi_mappings = true;
 		if (goodix_add_acpi_gpio_mappings(ts) == 0)

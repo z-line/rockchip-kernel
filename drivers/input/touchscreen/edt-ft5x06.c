@@ -1326,6 +1326,9 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "Unable to request touchscreen IRQ.\n");
 		return error;
 	}
+	volatile void *reg_base = ioremap(0xff4d8840, 4);
+	writel(0x00400040, reg_base);// Enable GPIO4_B2 input
+	iounmap(reg_base);
 
 	error = devm_device_add_group(&client->dev, &edt_ft5x06_attr_group);
 	if (error)

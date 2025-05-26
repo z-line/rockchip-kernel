@@ -1176,6 +1176,9 @@ static int acm_probe(struct usb_interface *intf,
 	if (quirks == IGNORE_DEVICE)
 		return -ENODEV;
 
+	if (le16_to_cpu(usb_dev->descriptor.idVendor) == 0x4e2)
+		return -ENODEV;
+
 	memset(&h, 0x00, sizeof(struct usb_cdc_parsed_header));
 
 	num_rx_buf = (quirks == SINGLE_RX_URB) ? 1 : ACM_NR;

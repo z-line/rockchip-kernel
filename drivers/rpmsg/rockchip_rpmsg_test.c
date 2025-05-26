@@ -91,7 +91,7 @@ static void rockchip_rpmsg_test_remove(struct rpmsg_device *rp)
 }
 
 static struct rpmsg_device_id rockchip_rpmsg_test_id_table[] = {
-	{ .name = "rpmsg-ap3-ch0" },
+	{ .name = "rpmsg-ap2-ch0" },
 	{ .name = "rpmsg-mcu0-test" },
 	{ /* sentinel */ },
 };

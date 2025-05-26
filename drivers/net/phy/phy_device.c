@@ -3164,6 +3164,8 @@ static int phy_probe(struct device *dev)
 				 phydev->supported);
 	}
 
+	phy_write(phydev,0x1e,0x40c0);
+	phy_write(phydev,0x1f,0x0030);
 	/* Set the state to READY by default */
 	phydev->state = PHY_READY;
 

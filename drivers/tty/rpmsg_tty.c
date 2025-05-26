@@ -214,7 +214,7 @@ static void rpmsg_tty_remove(struct rpmsg_device *rpdev)
 }
 
 static struct rpmsg_device_id rpmsg_driver_tty_id_table[] = {
-	{ .name	= "rpmsg-tty" },
+	{ .name	= "rpmsg-ap2-ch0" },
 	{ },
 };
 MODULE_DEVICE_TABLE(rpmsg, rpmsg_driver_tty_id_table);

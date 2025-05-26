@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2024 Rockchip Electronics Co., Ltd.
+ */
+
+/dts-v1/;
+
+#include "OK3506-S-common.dtsi"
+
+/ {
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xff0a0000 console=ttyFIQ0 root=PARTUUID=614e0000-0000 rw rootwait snd_aloop.index=7 snd_aloop.use_raw_jiffies=1 quiet initcall_debug printk.time=y";
+	};
+
+	memory: memory {
+		device_type = "memory";
+		reg = <0x00000000 0x20000000>;
+	};
+};
+
+&drm_logo {
+	reg = <0x1de00000 0x15a000>;
+};
+
+&mmc {
+	no-sdio;
+	no-sd;
+	cap-mmc-highspeed;
+	non-removable;
+	disable-wp;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdmmc_clk_pins &sdmmc_cmd_pins &sdmmc_bus4_pins>;
+	vqmmc-supply = <&vcc_3v3>;
+	vmmc-supply = <&vcc_3v3>;
+	status = "okay";
+};
+
+/* mipi display */
+&dsi_dphy {
+	status = "okay";
+};
+
+&vop_out_dsi {
+	status = "okay";
+};
+
+&dsi_in_vop {
+	status = "okay";
+};
+
+&route_dsi {
+	status = "okay";
+};
+
+&dsi {
+	status = "okay";
+};
