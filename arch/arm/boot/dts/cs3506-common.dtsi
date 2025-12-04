@@ -337,15 +337,15 @@
 	status = "okay";
 };
 
-&uart1 {
+&can0 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io19_uart1_tx &rm_io20_uart1_rx>;
+	pinctrl-0 = <&rm_io19_can0_tx &rm_io20_can0_rx>;
 	status = "okay";
 };
 
-&can1 {
+&uart1 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io16_can1_rx &rm_io17_can1_tx>;
+	pinctrl-0 = <&rm_io16_uart1_rx &rm_io17_uart1_tx>;
 	status = "okay";
 };
 
