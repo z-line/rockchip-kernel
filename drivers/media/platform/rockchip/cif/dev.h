@@ -37,6 +37,9 @@
 #define OF_CIF_MONITOR_PARA	"rockchip,cif-monitor"
 #define OF_CIF_WAIT_LINE	"wait-line"
 #define OF_CIF_FASTBOOT_RESERVED_BUFS	"fastboot-reserved-bufs"
+#define OF_CIF_PINS_GROUP	"cif-pins-group"
+#define OF_CIF_SWITCH_HOST_IDX	"switch-host-idx"
+#define OF_CIF_SWITCH_GPIO_VAL	"switch-gpio-val"
 
 #define CIF_MONITOR_PARA_NUM	(5)
 
@@ -90,6 +93,9 @@
 #define RDBK_M			1
 #define RDBK_S			2
 
+#define RKCIF_EXP_NUM_MAX	(8)
+
+#define RKCIF_MAX_DEV		(8)
 /*
  * for distinguishing cropping from senosr or usr
  */
@@ -477,6 +483,7 @@ struct rkcif_rx_buffer {
 	struct rkcif_dummy_buffer dummy;
 	struct rkisp_thunderboot_shmem shmem;
 	u64 fe_timestamp;
+	bool is_init[RKCIF_MAX_DEV];
 };
 
 enum rkcif_dma_en_mode {
@@ -522,6 +529,26 @@ struct rkcif_fence {
 	struct list_head fence_list;
 	struct dma_fence *fence;
 	int fence_fd;
+};
+
+struct rkcif_sensor_exp {
+	int sequence;
+	u32 exp[3];
+};
+
+struct rkcif_sensor_gain {
+	int sequence;
+	u32 gain[3];
+};
+
+struct rkcif_sensor_vts {
+	int sequence;
+	u32 vts;
+};
+
+struct rkcif_sensor_dcg {
+	int sequence;
+	u32 dcg[3];
 };
 
 /*
@@ -615,6 +642,13 @@ struct rkcif_stream {
 	struct list_head		done_fence_list_head;
 	spinlock_t			fence_lock;
 	u32				rounding_bit;
+	int				frame_loss;
+	struct kfifo			exp_kfifo;
+	struct kfifo			gain_kfifo;
+	struct kfifo			vts_kfifo;
+	struct kfifo			dcg_kfifo;
+	struct rkmodule_exp_delay	exp_delay;
+	struct rkmodule_exp_info	sensor_exp_info;
 	bool				stopping;
 	bool				crop_enable;
 	bool				crop_dyn_en;
@@ -640,6 +674,7 @@ struct rkcif_stream {
 	bool				is_wait_single_cap;
 	bool				is_m_online_fb_res;
 	bool				is_fb_first_frame;
+	bool				is_pause_stream;
 };
 
 struct rkcif_lvds_subdev {
@@ -737,6 +772,7 @@ enum scale_ch_sw {
 };
 
 enum scale_mode {
+	SCALE_4TIMES,
 	SCALE_8TIMES,
 	SCALE_16TIMES,
 	SCALE_32TIMES,
@@ -906,6 +942,17 @@ struct rkcif_stream_info {
 	struct sditf_priv *priv;
 };
 
+struct rkcif_switch_info {
+	bool is_use_switch;
+	bool is_active;
+	bool is_init;
+	bool is_init_buf;
+	int host_idx;
+	int gpio_val;
+	struct gpio_desc *gpio_pin;
+	struct rkcif_device *switch_dev;
+};
+
 /*
  * struct rkcif_device - ISP platform device
  * @base_addr: base register address
@@ -936,6 +983,7 @@ struct rkcif_device {
 	atomic_t			power_cnt;
 	atomic_t			streamoff_cnt;
 	atomic_t			sensor_off;
+	atomic_t			sd_power_cnt;
 	struct mutex			stream_lock; /* lock between streams */
 	struct mutex			scale_lock; /* lock between scale dev */
 	struct mutex			tools_lock; /* lock between tools dev */
@@ -959,7 +1007,7 @@ struct rkcif_device {
 	spinlock_t			stream_spinlock;
 	struct rkcif_timer		reset_watchdog_timer;
 	struct rkcif_work_struct	reset_work;
-	int				id_use_cnt;
+	atomic_t			id_use_cnt;
 	unsigned int			csi_host_idx;
 	unsigned int			csi_host_idx_def;
 	unsigned int			dvp_sof_in_oneframe;
@@ -996,6 +1044,8 @@ struct rkcif_device {
 	bool				is_camera_over_bridge;
 	bool				is_thunderboot_start;
 	bool				is_in_flip;
+	bool				is_support_get_exp;
+	bool				is_detect_group_sync;
 	int				rdbk_debug;
 	struct rkcif_sync_cfg		sync_cfg;
 	int				sditf_cnt;
@@ -1022,6 +1072,8 @@ struct rkcif_device {
 	u32				pre_buf_num;
 	u32				pre_buf_addr[MAX_PRE_BUF_NUM];
 	u64				pre_buf_timestamp[MAX_PRE_BUF_NUM];
+	u32				dvp_pin_group;
+	struct rkcif_switch_info	switch_info;
 };
 
 extern struct platform_driver rkcif_plat_drv;
@@ -1125,7 +1177,8 @@ void rkcif_free_buf_by_user_require(struct rkcif_device *dev);
 static inline u64 rkcif_time_get_ns(struct rkcif_device *dev)
 {
 	if (dev->chip_id == CHIP_RV1106_CIF ||
-	    dev->chip_id == CHIP_RV1103B_CIF)
+	    dev->chip_id == CHIP_RV1103B_CIF ||
+	    dev->chip_id == CHIP_RV1126B_CIF)
 		return ktime_get_boottime_ns();
 	else
 		return ktime_get_ns();
@@ -1144,4 +1197,9 @@ void rkcif_reinit_right_half_config(struct rkcif_stream *stream);
 void rkcif_modify_line_int(struct rkcif_stream *stream, bool en);
 
 void rkcif_set_sof(struct rkcif_device *cif_dev, u32 seq);
+
+void rkcif_set_sensor_streamon_in_sync_mode(struct rkcif_device *cif_dev);
+int rkcif_sensor_set_power(struct rkcif_stream *stream, int on);
+void rkcif_switch_change(struct rkcif_device *cif_dev, bool is_switch);
+
 #endif
